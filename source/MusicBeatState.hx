@@ -16,11 +16,9 @@ import flixel.FlxBasic;
 #if android
 import android.AndroidControls;
 import android.flixel.FlxVirtualPad;
-import flixel.FlxCamera;
 import flixel.input.actions.FlxActionInput;
 import flixel.util.FlxDestroyUtil;
 #end
-
 class MusicBeatState extends FlxUIState
 {
 	private var lastBeat:Float = 0;
@@ -28,8 +26,8 @@ class MusicBeatState extends FlxUIState
 
 	private var curStep:Int = 0;
 	private var curBeat:Int = 0;
+
 	private var controls(get, never):Controls;
-	public var videos:Array<FlxVideo> = [];
 
 	inline function get_controls():Controls
 		return PlayerSettings.player1.controls;
@@ -53,7 +51,7 @@ class MusicBeatState extends FlxUIState
 	public function removeVirtualPad()
 	{
 		if (trackedinputsUI != [])
-			controls.removeAControlsInput(trackedinputsUI);
+			controls.removeFlxInput(trackedinputsUI);
 
 		if (virtualPad != null)
 			remove(virtualPad);
@@ -65,19 +63,19 @@ class MusicBeatState extends FlxUIState
 
 		switch (AndroidControls.getMode())
 		{
-			case 'Pad-Right' | 'Pad-Left' | 'Pad-Custom':
+			case 0 | 1 | 2: // RIGHT_FULL | LEFT_FULL | CUSTOM
 				controls.setVirtualPadNOTES(androidControls.virtualPad, RIGHT_FULL, NONE);
-			case 'Pad-Duo':
+			case 3: // BOTH_FULL
 				controls.setVirtualPadNOTES(androidControls.virtualPad, BOTH_FULL, NONE);
-			case 'Hitbox':
+			case 4: // HITBOX
 				controls.setHitBox(androidControls.hitbox);
-			case 'Keyboard': // do nothing
+			case 5: // KEYBOARD
 		}
 
 		trackedinputsNOTES = controls.trackedinputsNOTES;
 		controls.trackedinputsNOTES = [];
 
-		var camControls:FlxCamera = new FlxCamera();
+		var camControls = new flixel.FlxCamera();
 		FlxG.cameras.add(camControls);
 		camControls.bgColor.alpha = 0;
 
@@ -89,7 +87,7 @@ class MusicBeatState extends FlxUIState
 	public function removeAndroidControls()
 	{
 		if (trackedinputsNOTES != [])
-			controls.removeAControlsInput(trackedinputsNOTES);
+			controls.removeFlxInput(trackedinputsNOTES);
 
 		if (androidControls != null)
 			remove(androidControls);
@@ -99,7 +97,7 @@ class MusicBeatState extends FlxUIState
 	{
 		if (virtualPad != null)
 		{
-			var camControls:FlxCamera = new FlxCamera();
+			var camControls = new flixel.FlxCamera();
 			FlxG.cameras.add(camControls);
 			camControls.bgColor.alpha = 0;
 			virtualPad.cameras = [camControls];
@@ -111,10 +109,10 @@ class MusicBeatState extends FlxUIState
 	{
 		#if android
 		if (trackedinputsNOTES != [])
-			controls.removeAControlsInput(trackedinputsNOTES);
+			controls.removeFlxInput(trackedinputsNOTES);
 
 		if (trackedinputsUI != [])
-			controls.removeAControlsInput(trackedinputsUI);
+			controls.removeFlxInput(trackedinputsUI);
 		#end
 
 		super.destroy();
@@ -133,14 +131,12 @@ class MusicBeatState extends FlxUIState
 		}
 		#end
 	}
-
-override function create() {
+	override function create() {
 		var skip:Bool = FlxTransitionableState.skipNextTransOut;
 		super.create();
 
-		// Custom made Trans out
 		if(!skip) {
-			openSubState(new CustomFadeTransition(1, true));
+			openSubState(new CustomFadeTransition(0.7, true));
 		}
 		FlxTransitionableState.skipNextTransOut = false;
 	}
@@ -148,19 +144,13 @@ override function create() {
 	#if (VIDEOS_ALLOWED && windows)
 	override public function onFocus():Void
 	{
-		for (video in videos)
-		{
-			video.onFocus();
-		}
+		FlxVideo.onFocus();
 		super.onFocus();
 	}
 	
 	override public function onFocusLost():Void
 	{
-		for (video in videos)
-		{
-			video.onFocusLost();
-		}
+		FlxVideo.onFocusLost();
 		super.onFocusLost();
 	}
 	#end
@@ -175,6 +165,8 @@ override function create() {
 
 		if (oldStep != curStep && curStep > 0)
 			stepHit();
+
+		if(FlxG.save.data != null) FlxG.save.data.fullscreen = FlxG.fullscreen;
 
 		super.update(elapsed);
 	}
@@ -205,7 +197,7 @@ override function create() {
 		var curState:Dynamic = FlxG.state;
 		var leState:MusicBeatState = curState;
 		if(!FlxTransitionableState.skipNextTransIn) {
-			leState.openSubState(new CustomFadeTransition(0.7, false));
+			leState.openSubState(new CustomFadeTransition(0.6, false));
 			if(nextState == FlxG.state) {
 				CustomFadeTransition.finishCallback = function() {
 					FlxG.resetState();

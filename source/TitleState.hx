@@ -79,7 +79,7 @@ class TitleState extends MusicBeatState
 
 	override public function create():Void
 	{
-		#if MODS_ALLOWED
+		#if windows 
 		// Just to load a mod on start up if ya got one. For mods that change the menu music and bg
 		if (FileSystem.exists("modsList.txt")){
 			
@@ -446,7 +446,7 @@ class TitleState extends MusicBeatState
 
 		var pressedEnter:Bool = FlxG.keys.justPressed.ENTER || controls.ACCEPT;
 
-		#if mobile
+		#if android 
 		for (touch in FlxG.touches.list)
 		{
 			if (touch.justPressed)
